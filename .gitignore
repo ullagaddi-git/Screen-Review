@@ -1,0 +1,35 @@
+# Dependencies and build output
+node_modules/
+out/
+dist/
+.vite/
+*.log
+.DS_Store
+Thumbs.db
+
+# Bundled binaries (downloaded via postinstall — too big for git)
+resources/whisper/*.bin
+resources/whisper/bin/
+resources/whisper/.version
+
+# Local env / credentials
+.env
+.env.local
+.env.*.local
+
+# Claude Code per-machine state (permissions, scheduled tasks, locks)
+.claude/
+
+# Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS scratch
+*.tmp
+*.bak
+~$*
+
+# Windows shortcuts that landed here by accident — never source-controlled
+*.lnk

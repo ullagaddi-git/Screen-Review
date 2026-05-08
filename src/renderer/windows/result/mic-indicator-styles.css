@@ -1,0 +1,35 @@
+/* Fonts and design tokens come from ../../styles/globals.css. */
+
+html,
+body,
+#root {
+  margin: 0;
+  background: transparent;
+  color: var(--color-text);
+  font-family: var(--font-body);
+  -webkit-font-smoothing: antialiased;
+  user-select: none;
+}
+
+body {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  height: 100vh;
+  padding: 0;
+}
+
+#root {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+@keyframes mic-pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.55; transform: scale(0.85); }
+}
+
+.animate-mic-pulse {
+  animation: mic-pulse 1.5s ease-in-out infinite;
+}

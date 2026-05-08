@@ -1,0 +1,83 @@
+{
+  "meta": {
+    "createdAt": "2026-05-03T00:00:00Z",
+    "updatedAt": "2026-05-03T00:00:00Z",
+    "version": "1.0",
+    "plaidVersion": "1.0"
+  },
+  "creator": {
+    "name": "Christian",
+    "expertise": "Non-technical founder and entrepreneur — building with AI coding tools (Claude Code in Cursor)",
+    "background": "I spotted a gap in everyday productivity tooling: no single Windows app combines voice dictation, AI-powered screen capture, and smart analysis in one seamless workflow. I kept switching between three separate tools — a dictation app, a screenshot tool, and ChatGPT — just to get through basic tasks. I knew the right product could collapse all of that into a single hotkey."
+  },
+  "purpose": {
+    "whoYouHelp": "Windows power users — developers, knowledge workers, writers, and professionals — who want to speak to type anywhere and capture + analyze anything on their screen without juggling multiple apps",
+    "problemYouSolve": "People waste time and focus switching between a voice dictation app, a screenshot tool, and an AI chat interface to accomplish what should be one seamless workflow. Developers with terminal errors have no quick way to capture the full terminal output and get an AI explanation in seconds — they manually copy-paste into ChatGPT and lose their flow.",
+    "desiredTransformation": "Users go from juggling three separate tools — and losing their train of thought every time — to having one lightweight system-tray app that lets them speak, capture, and understand their screen, all from a global hotkey, all locally and privately.",
+    "whyYou": "Christian lives in this problem daily. He uses AI tools constantly, switches between apps constantly, and saw that the combination of voice input and AI screen understanding simply doesn't exist as a cohesive, privacy-first desktop product. As a non-technical founder building with AI coding tools, he also represents the target user who wants powerful software without complexity."
+  },
+  "product": {
+    "name": "ScreenSpeak",
+    "oneLiner": "ScreenSpeak helps Windows users speak to type anywhere and capture + analyze anything on screen with AI — all from a lightweight system tray app.",
+    "howItWorks": "ScreenSpeak lives in your Windows system tray. Press one hotkey to start speaking — your words transcribe locally using Whisper and appear at your cursor in any app: email, browser, VS Code, anything. Press a second hotkey to enter capture mode — choose desktop, window, region, or auto-scroll capture — and ScreenSpeak sends the screenshot to a local AI model (via Ollama) which returns a summary, explains errors, extracts text, or answers questions. Users can also add their own OpenAI API key in settings for sharper cloud analysis — at no cost to the developer.",
+    "keyCapabilities": [
+      "Global voice-to-text: press hotkey, speak, text appears at cursor in any Windows app",
+      "Multi-mode screen capture: region, active window, full desktop, auto-scroll (for terminals and IDEs)",
+      "AI screenshot analysis: summarize, explain errors, extract text, answer questions — locally via Ollama",
+      "Optional cloud AI boost: user brings their own OpenAI API key for GPT-4o Vision quality",
+      "System tray resident: always available, zero friction, configurable hotkeys"
+    ],
+    "platform": "desktop",
+    "marketDifferentiation": "Unlike Wispr Flow (voice only) or ShareX (capture only with no AI), ScreenSpeak is the only tool that chains voice + capture + AI in a single hotkey workflow. No sign-up, no subscription, no data leaving your machine by default. The terminal-to-AI-explanation flow — one hotkey, full scroll capture, instant diagnosis — doesn't exist in any other desktop product.",
+    "magicMoment": "A developer sees an error in their VS Code terminal. They press one hotkey — ScreenSpeak auto-scrolls and stitches the full terminal output into a single image, sends it to the local AI model, and returns a plain-English explanation with a suggested fix — all in under 10 seconds, without leaving VS Code."
+  },
+  "audience": {
+    "primaryUser": "Alex, 28, a developer on Windows who uses Cursor or VS Code daily. Spends hours debugging, writing docs, and prompting AI tools. Frustrated that voice dictation breaks outside specific apps, and that screenshot tools are dumb — they capture but don't understand. Currently copies errors manually into ChatGPT, which interrupts his flow every single time.",
+    "secondaryUsers": [
+      "Non-technical professionals (writers, executives, marketers) who want system-wide voice dictation for emails, documents, and AI prompts — without monthly subscriptions",
+      "Content creators and researchers who capture reference screenshots constantly and want instant AI summaries instead of reading everything manually",
+      "Productivity-focused power users who want to automate context-gathering and reduce app-switching in their daily workflow"
+    ],
+    "currentAlternatives": "Wispr Flow and OpenWhispr (voice only, no screen capture), ShareX (capture only, no AI analysis), GoFullPage (browser-only capture, no AI), Windows built-in Voice Typing (inaccurate, no AI, breaks frequently), manually copy-pasting into ChatGPT, Snipping Tool (no AI), or just living with the friction",
+    "frustrations": "No single tool combines voice + capture + AI. Existing voice tools don't work system-wide on Windows reliably. Screenshot tools are completely unintelligent. Using three separate apps creates constant context-switching that kills focus. Local and offline AI options barely exist in a user-friendly form. Most good tools require subscriptions before the user knows if they even need it."
+  },
+  "business": {
+    "revenueModel": "free",
+    "initialGoal": "500 downloads in 90 days, 50 active weekly users, and at least 10 pieces of genuine feedback gathered through GitHub issues or an in-app feedback prompt",
+    "sixMonthVision": "3,000+ active Windows users, positive traction on Product Hunt and GitHub, a clear validated signal on whether one-time purchase or subscription converts better — and the first $1,000 MRR from early adopters who opt into the paid tier voluntarily",
+    "constraints": "Non-technical founder building solo with Claude Code in Cursor. No budget for API costs — must be free to run for users by default (local AI only). Windows-first to reduce platform complexity in v1. No backend infrastructure — fully local app.",
+    "goToMarket": "Launch on GitHub (open source or source-available freemium). Post demo videos of the magic moment (terminal error → instant AI fix) on X/Twitter, LinkedIn, and TikTok. Share in r/productivity, r/windows, r/cursor, and developer Discord communities. Launch on Product Hunt with the terminal use case as the hero."
+  },
+  "feeling": {
+    "brandPersonality": "The sharp, fast co-pilot that lives in the background and never gets in your way. Precise and reliable like a great tool — not a product. Think Linear's focused calm meets a Swiss Army knife's usefulness. Professional, slightly technical, zero fluff.",
+    "visualMood": "Dark-first, minimal. VS Code sidebar energy — deep dark backgrounds (#1E1E2E or similar), clean iconography, subtle blue-violet accent glows. Feels like it was built by and for people who live in IDEs. Not a consumer app. Not corporate. Pure utility with a sharp aesthetic.",
+    "toneOfVoice": "Direct, terse, functional. The app doesn't over-explain — it just works. When it communicates, it sounds like a sharp senior developer giving feedback: helpful, confident, no filler words. Error: 'Capture failed — window may be minimized.' Success: 'Captured. AI ready.' Onboarding: 'Set your hotkeys. You're ready.'",
+    "antiPatterns": "Never feel like SaaS bloatware — no mandatory sign-up screens, no onboarding carousels, no 'click here to see your streak.' Never feel slow — if the response takes more than 2 seconds without feedback, something is broken. Never use light or pastel colors — this app lives next to dark IDEs and terminals. Never interrupt the user's workflow with banners, upsells, or notifications they didn't ask for."
+  },
+  "techStack": {
+    "appType": "desktop",
+    "frontend": {
+      "choice": "Electron + React + TypeScript",
+      "rationale": "Most mature desktop framework for Windows, largest ecosystem and community, best AI coding tool support (Claude Code and Cursor know Electron extremely well), enables web tech (React/TypeScript) for the UI, has built-in APIs for desktopCapturer, globalShortcut, Tray, and system integration"
+    },
+    "backend": {
+      "choice": "None — fully local",
+      "rationale": "App runs entirely on-device. No server, no backend costs, no data leaving the machine by default. Electron main process handles all logic: hotkeys, capture, Whisper transcription, and Ollama API calls."
+    },
+    "database": {
+      "choice": "electron-store",
+      "rationale": "Lightweight local JSON config/settings storage for Electron apps. No setup, no server, persists user preferences, hotkey bindings, and optional API keys locally on device."
+    },
+    "auth": {
+      "choice": "None",
+      "rationale": "No user accounts required. App runs locally without sign-in. Optional OpenAI API key is stored locally in electron-store, never sent to any server the developer controls."
+    },
+    "payments": {
+      "choice": "None (Phase 1)",
+      "rationale": "Starting as a free tool to gather usage data and validate the product. Polar or Lemon Squeezy will be added in Phase 2 once a clear monetization signal exists."
+    }
+  },
+  "tooling": {
+    "codingAgent": "cursor"
+  }
+}

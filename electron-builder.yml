@@ -1,0 +1,43 @@
+appId: com.screenshpeak.app
+productName: ScreenSpeak
+copyright: Copyright © 2026 ScreenSpeak
+asar: true
+
+directories:
+  buildResources: resources/installer
+  output: dist
+
+files:
+  - "!**/.vscode/*"
+  - "!src/*"
+  - "!electron.vite.config.{js,mjs,ts,cjs}"
+  - "!{tsconfig.json,tsconfig.node.json,tsconfig.web.json,tailwind.config.ts,postcss.config.cjs}"
+  - "!{.eslintrc.cjs,.prettierrc,.prettierignore,.editorconfig}"
+  - "!{*.md,docs}"
+  - "!resources/whisper/**/*.bin"
+
+extraResources:
+  - from: resources/icons
+    to: icons
+    filter: ["**/*"]
+  - from: resources/whisper
+    to: whisper
+    filter: ["**/*"]
+
+win:
+  target:
+    - target: nsis
+      arch:
+        - x64
+  icon: resources/installer/icon.ico
+  artifactName: ${productName}-${version}-Setup.${ext}
+
+nsis:
+  oneClick: false
+  perMachine: false
+  allowToChangeInstallationDirectory: true
+  allowElevation: true
+  createDesktopShortcut: true
+  createStartMenuShortcut: true
+  shortcutName: ScreenSpeak
+  uninstallDisplayName: ScreenSpeak

@@ -1,0 +1,53 @@
+/* Fonts and design tokens come from ../../styles/globals.css (imported by
+   the entry point), so we don't re-import them here. */
+
+html,
+body,
+#root {
+  margin: 0;
+  background: transparent;
+  color: var(--color-text);
+  font-family: var(--font-body);
+  -webkit-font-smoothing: antialiased;
+  user-select: text;
+  height: 100%;
+}
+
+body {
+  display: flex;
+  align-items: stretch;
+  justify-content: stretch;
+}
+
+/* Slide-in animation per Vision § Motion & Interaction:
+   translateY(8px) + opacity 0 → translateY(0) + opacity 1 over 300ms. */
+@keyframes panel-enter {
+  from {
+    transform: translateY(8px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.panel-enter {
+  animation: panel-enter 300ms ease both;
+}
+
+/* Loading-state opacity pulse for "Analyzing…" — single dot sequence at 1.5s
+   per Vision: "no spinner, no skeleton". */
+@keyframes loading-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.45;
+  }
+}
+
+.loading-pulse {
+  animation: loading-pulse 1.5s ease-in-out infinite;
+}
