@@ -23,8 +23,16 @@ test('buildPreloadPath: does not double-append .js if name ends with .js', () =>
   assert.equal(out, join('/app/root', 'out', 'preload', 'region.js'))
 })
 
-test('buildPreloadPath: works with all five preload names we ship', () => {
-  for (const name of ['index', 'recorder', 'indicator', 'picker', 'region']) {
+test('buildPreloadPath: works with all preload names we ship', () => {
+  for (const name of [
+    'index',
+    'recorder',
+    'indicator',
+    'picker',
+    'region',
+    'result',
+    'transcript'
+  ]) {
     const out = buildPreloadPath('/x', name)
     assert.equal(out, join('/x', 'out', 'preload', `${name}.js`))
   }

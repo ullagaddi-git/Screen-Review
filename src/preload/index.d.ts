@@ -52,9 +52,43 @@ export interface ElectronAPI {
   }
   voice: {
     requestStart: () => Promise<{ ok: boolean; error?: string }>
+    requestStartStream: () => Promise<{ ok: boolean; error?: string }>
     requestStop: () => Promise<{ ok: boolean }>
     reloadHotkey: () => Promise<{ ok: boolean; hotkey?: string }>
     onStateChange: (handler: (payload: VoiceStatePayload) => void) => () => void
+  }
+  transcribeFile: {
+    run: (payload: {
+      sourceFilename: string
+      durationSeconds: number
+      wav: ArrayBuffer
+    }) => Promise<
+      | { ok: true; transcript: string; durationSeconds: number; sourceFilename: string }
+      | { ok: false; error: string }
+    >
+    extractActions: (
+      transcript: string
+    ) => Promise<{ ok: boolean; text?: string; error?: string; provider?: string }>
+    saveTranscript: (payload: {
+      sourceFilename: string
+      durationSeconds: number
+      transcript: string
+    }) => Promise<{ ok: boolean; filePath?: string; error?: string }>
+    saveActions: (payload: {
+      sourceFilename: string
+      actions: string
+    }) => Promise<{ ok: boolean; filePath?: string; error?: string }>
+    openFolder: () => Promise<{ ok: boolean; folder?: string }>
+    showFile: (filePath: string) => Promise<{ ok: boolean }>
+  }
+  meeting: {
+    toggle: () => Promise<{ ok: boolean; state: 'idle' | 'recording' | 'saving' }>
+    getState: () => Promise<{
+      state: 'idle' | 'recording' | 'saving'
+      consentAcknowledged: boolean
+    }>
+    acknowledgeConsent: () => Promise<{ ok: boolean }>
+    openFolder: () => Promise<{ ok: boolean }>
   }
   capture: {
     execute: (mode: 'region' | 'window' | 'desktop' | 'autoscroll') => Promise<{

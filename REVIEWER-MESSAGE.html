@@ -1,0 +1,426 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>ScreenSpeak — Early Review Build</title>
+    <style>
+      :root {
+        --primary: #7c3aed;
+        --primary-hover: #6d28d9;
+        --bg: #1e1e2e;
+        --surface: #181825;
+        --surface-2: #11111b;
+        --surface-3: #2a2a3e;
+        --text: #cdd6f4;
+        --text-muted: #6c7086;
+        --border: #3a3a5c;
+        --warning: #f9e2af;
+        --success: #a6e3a1;
+        --info: #89dceb;
+      }
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+      }
+      html,
+      body {
+        margin: 0;
+        padding: 0;
+      }
+      body {
+        background: var(--bg);
+        color: var(--text);
+        font-family:
+          'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+        font-size: 16px;
+        line-height: 1.6;
+        -webkit-font-smoothing: antialiased;
+      }
+      .wrap {
+        max-width: 720px;
+        margin: 0 auto;
+        padding: 48px 24px;
+      }
+      h1 {
+        font-size: 2rem;
+        font-weight: 600;
+        margin: 0 0 8px;
+      }
+      h1 .accent {
+        color: var(--primary);
+      }
+      h2 {
+        font-size: 1.25rem;
+        font-weight: 600;
+        margin: 40px 0 12px;
+        padding-top: 24px;
+        border-top: 1px solid var(--border);
+      }
+      h3 {
+        font-size: 1rem;
+        font-weight: 600;
+        margin: 24px 0 8px;
+      }
+      p {
+        margin: 12px 0;
+      }
+      .lede {
+        color: var(--text-muted);
+        font-size: 1.05rem;
+        margin-bottom: 32px;
+      }
+      a {
+        color: var(--primary);
+        text-decoration: underline;
+        text-underline-offset: 2px;
+      }
+      a:hover {
+        color: var(--primary-hover);
+      }
+      ul,
+      ol {
+        padding-left: 24px;
+      }
+      li {
+        margin: 6px 0;
+      }
+      code,
+      kbd {
+        font-family: 'JetBrains Mono', 'Fira Code', Consolas, monospace;
+        font-size: 0.9em;
+      }
+      kbd {
+        display: inline-block;
+        padding: 1px 6px;
+        background: var(--surface-3);
+        border: 1px solid var(--border);
+        border-radius: 4px;
+        font-size: 0.85em;
+        color: var(--text);
+      }
+      code:not(pre code) {
+        background: var(--surface-2);
+        border: 1px solid var(--border);
+        border-radius: 4px;
+        padding: 1px 6px;
+        color: var(--text);
+      }
+      pre {
+        background: var(--surface-2);
+        border: 1px solid var(--border);
+        border-radius: 6px;
+        padding: 12px 16px;
+        overflow-x: auto;
+        margin: 12px 0;
+      }
+      pre code {
+        background: none;
+        border: none;
+        padding: 0;
+        color: var(--text);
+      }
+      .download {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 6px;
+        padding: 16px 20px;
+        margin: 20px 0;
+      }
+      .download .row {
+        display: flex;
+        gap: 12px;
+        align-items: baseline;
+        flex-wrap: wrap;
+        margin: 4px 0;
+      }
+      .download .label {
+        color: var(--text-muted);
+        min-width: 80px;
+        font-size: 0.9em;
+      }
+      .sha {
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 0.78em;
+        word-break: break-all;
+      }
+      .warn {
+        background: rgba(249, 226, 175, 0.08);
+        border-left: 3px solid var(--warning);
+        padding: 12px 16px;
+        border-radius: 4px;
+        margin: 16px 0;
+      }
+      .warn strong {
+        color: var(--warning);
+      }
+      .feedback-box {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 6px;
+        padding: 16px 20px;
+        margin: 16px 0;
+      }
+      .feedback-box ol {
+        margin: 0;
+      }
+      .footer-note {
+        color: var(--text-muted);
+        font-size: 0.95em;
+        margin-top: 32px;
+        padding-top: 24px;
+        border-top: 1px solid var(--border);
+      }
+      .neg-list {
+        color: var(--text-muted);
+      }
+      .neg-list li::marker {
+        color: var(--text-muted);
+      }
+      .hotkey-row {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin: 8px 0;
+      }
+    </style>
+  </head>
+  <body>
+    <main class="wrap">
+      <h1>
+        <span class="accent">ScreenSpeak</span> — early review build
+      </h1>
+      <p class="lede">
+        Hi 👋 I&rsquo;ve been building <strong>ScreenSpeak</strong> &mdash; a
+        Windows tray app for <strong>voice dictation</strong> and
+        <strong>AI-powered screenshot analysis</strong>. It&rsquo;s at
+        v1.0.0-ready state and I&rsquo;d love your feedback before I publish
+        publicly. About 5 minutes to install and try.
+      </p>
+
+      <h2>Download</h2>
+      <div class="download">
+        <div class="row">
+          <span class="label">Installer</span>
+          <a href="#REPLACE_WITH_DOWNLOAD_LINK">[link to Drive / Dropbox / GitHub Release]</a>
+        </div>
+        <div class="row">
+          <span class="label">File</span>
+          <code>ScreenSpeak-1.0.0-Setup.exe</code>
+        </div>
+        <div class="row">
+          <span class="label">Size</span>
+          242 MB
+        </div>
+        <div class="row">
+          <span class="label">SHA-256</span>
+          <span class="sha">ac990e4bb26a695bdaecc08e8668a35a780c2a2935838ffab0d790bc0c425a02</span>
+        </div>
+      </div>
+      <p>To verify the download integrity (optional but recommended):</p>
+      <pre><code>Get-FileHash .\ScreenSpeak-1.0.0-Setup.exe -Algorithm SHA256</code></pre>
+      <p>It should match the SHA-256 above.</p>
+
+      <h2>Installing (3 clicks, but read step 2)</h2>
+      <ol>
+        <li>Run <code>ScreenSpeak-1.0.0-Setup.exe</code>.</li>
+        <li>
+          <div class="warn">
+            <strong>⚠ Windows will warn &ldquo;Windows protected your PC&rdquo;</strong>
+            &mdash; this is because the installer isn&rsquo;t yet code-signed
+            (signing certs cost ~$200&ndash;400/year and I haven&rsquo;t
+            bought one yet). Click <strong>More info</strong> &rarr;
+            <strong>Run anyway</strong>.
+          </div>
+        </li>
+        <li>The installer asks where to put it (default location is fine).</li>
+        <li>
+          After install, the app starts in your <strong>system tray</strong>
+          (bottom-right icon). Right-click the tray icon &rarr; Settings to
+          configure.
+        </li>
+      </ol>
+
+      <h2>What to try</h2>
+
+      <h3>1. Voice dictation (works out of the box)</h3>
+      <ul>
+        <li>Open Notepad or any text field.</li>
+        <li>
+          Hold <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>Space</kbd> while you
+          speak.
+        </li>
+        <li>Release. Your words paste at the cursor.</li>
+        <li>Works in any app &mdash; Chrome, VS Code, Slack, etc.</li>
+      </ul>
+
+      <h3>2. Screen capture</h3>
+      <ul>
+        <li>
+          Press <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>S</kbd>. A small mode
+          picker appears at the bottom of your screen.
+        </li>
+        <li>
+          Use <strong>arrow keys</strong> + <kbd>Enter</kbd> (or click) to
+          pick a mode:
+          <ul>
+            <li><strong>Region</strong> &mdash; drag a rectangle.</li>
+            <li>
+              <strong>Window</strong> &mdash; captures whatever window had
+              focus before the picker.
+            </li>
+            <li><strong>Desktop</strong> &mdash; full screen.</li>
+            <li>
+              <strong>Auto-scroll</strong> &mdash; captures a long,
+              scrollable area (e.g. a Terminal with 200+ lines or a long
+              Notion page) and stitches the frames.
+            </li>
+          </ul>
+        </li>
+        <li>Press <kbd>Esc</kbd> to cancel anytime.</li>
+      </ul>
+
+      <h3>3. AI screenshot analysis (optional, choose one)</h3>
+      <p>
+        This part isn&rsquo;t required to test the rest of the app, but
+        it&rsquo;s the &ldquo;magic moment&rdquo; feature.
+      </p>
+
+      <p><strong>Option A: Local AI (free, private, ~5 GB to download)</strong></p>
+      <ol>
+        <li>
+          Install <a href="https://ollama.com">Ollama</a> (5 MB binary).
+        </li>
+        <li>
+          In a terminal: <code>ollama pull llava:7b</code> (~5 GB; takes ~10
+          min).
+        </li>
+        <li>
+          ScreenSpeak detects Ollama automatically. Capture a screenshot of
+          an error message, code, or anything visual &mdash; the result
+          panel will pop up with an AI explanation.
+        </li>
+        <li>
+          First analysis takes 30&ndash;90 s on CPU; subsequent ones are
+          5&ndash;15 s. With a GPU, Ollama uses it automatically.
+        </li>
+      </ol>
+
+      <p>
+        <strong>Option B: OpenAI (fast, paid, ~$0.01/analysis)</strong>
+      </p>
+      <ol>
+        <li>
+          Get an API key from
+          <a href="https://platform.openai.com/api-keys"
+            >platform.openai.com</a
+          >.
+        </li>
+        <li>
+          ScreenSpeak Settings &rarr; AI tab &rarr; switch mode to
+          &ldquo;Cloud (OpenAI)&rdquo;. Paste the key, click &ldquo;Test
+          key&rdquo;, then &ldquo;Save&rdquo;. Key is encrypted on your
+          machine; only sent to OpenAI for the actual analysis call.
+        </li>
+      </ol>
+
+      <h2>System requirements</h2>
+      <ul>
+        <li><strong>Windows 10</strong> (build 1809+) or <strong>Windows 11</strong></li>
+        <li><strong>x64</strong> architecture (no ARM64 in v1)</li>
+        <li>
+          <strong>4 GB RAM</strong> (8 GB+ recommended if using local AI)
+        </li>
+        <li><strong>~250 MB disk</strong> for the app itself</li>
+        <li>A <strong>microphone</strong> (for voice features)</li>
+      </ul>
+
+      <h2>What I&rsquo;d love feedback on</h2>
+      <p>If you can spare 5 minutes after trying it:</p>
+      <div class="feedback-box">
+        <ol>
+          <li>
+            <strong>Did the SmartScreen warning scare you off?</strong> Real
+            concern &mdash; non-technical users sometimes abandon at this
+            point. Curious whether you proceeded and whether you hesitated.
+          </li>
+          <li>
+            <strong>Was the tray-only UX discoverable?</strong> The app has
+            no taskbar entry; the only UI is the violet <strong>SS</strong>
+            icon in the system tray. Did you find it?
+          </li>
+          <li>
+            <strong>Did the voice latency feel right?</strong> First
+            transcription: ~2&ndash;3 s. Is that fast enough for your
+            dictation use case?
+          </li>
+          <li>
+            <strong>Did the hotkeys conflict with anything you use?</strong>
+            I&rsquo;m especially curious about
+            <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>S</kbd> &mdash; VS Code
+            uses it for &ldquo;Save As&rdquo;, but I <em>consume</em> the
+            event so VS Code shouldn&rsquo;t see it. Worth verifying.
+          </li>
+          <li>
+            <strong>Anything broken or surprising.</strong> Bug reports are
+            gold. Even small ones.
+          </li>
+        </ol>
+      </div>
+
+      <h2>How to send feedback</h2>
+      <p>Pick whatever&rsquo;s easiest for you:</p>
+      <ul>
+        <li>
+          <strong>GitHub Issues</strong> (public, best for bug tracking):
+          <a href="https://github.com/ullagaddi-git/Screen-Review/issues"
+            >github.com/ullagaddi-git/Screen-Review/issues</a
+          >
+        </li>
+        <li>
+          <strong>Reply to this message</strong> with screenshots or notes.
+        </li>
+        <li>
+          <strong>Quick voice note</strong> &mdash; try recording it with
+          ScreenSpeak itself 😉 Hold the hotkey, talk, paste into your
+          reply.
+        </li>
+      </ul>
+
+      <h2>What it isn&rsquo;t (yet)</h2>
+      <p>So you don&rsquo;t waste time looking for these:</p>
+      <ul class="neg-list">
+        <li>macOS or Linux support &mdash; Windows only.</li>
+        <li>
+          Multi-monitor capture target picker &mdash; captures the primary
+          display.
+        </li>
+        <li>
+          Capture history &mdash; once you dismiss the result panel, the
+          analysis is gone (clipboard still has the text/image if you
+          copied).
+        </li>
+        <li>&ldquo;Ask a follow-up question&rdquo; &mdash; first response only.</li>
+        <li>
+          Code signing &mdash; the installer triggers SmartScreen as noted
+          above.
+        </li>
+        <li>
+          Auto-update from GitHub &mdash; wired in code, but only kicks in
+          after the first public release.
+        </li>
+      </ul>
+      <p>
+        All of those are on the Phase 6 roadmap if there&rsquo;s user
+        demand.
+      </p>
+
+      <p class="footer-note">
+        Thanks for trying it. Genuinely appreciate any reaction &mdash; even
+        &ldquo;this isn&rsquo;t useful for me because&hellip;&rdquo; is
+        helpful.
+      </p>
+    </main>
+  </body>
+</html>

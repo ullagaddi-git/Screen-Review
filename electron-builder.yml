@@ -41,3 +41,12 @@ nsis:
   createStartMenuShortcut: true
   shortcutName: ScreenSpeak
   uninstallDisplayName: ScreenSpeak
+
+# GitHub Releases as the auto-update channel. electron-updater (wired in
+# src/main/services/updater.ts) checks this provider on app start and
+# downloads new installers from the same source as the current install.
+publish:
+  provider: github
+  owner: ullagaddi-git
+  repo: Screen-Review
+  releaseType: release

@@ -1,6 +1,6 @@
 {
   "name": "screenshpeak",
-  "version": "1.0.0",
+  "version": "1.0.0-beta.1",
   "description": "Voice-to-text and AI-powered screen capture for Windows. Local-first, hotkey-driven, free.",
   "main": "out/main/index.js",
   "author": "ScreenSpeak",

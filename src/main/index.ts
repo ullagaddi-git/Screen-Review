@@ -22,8 +22,11 @@ import { closePicker } from './windows/mode-picker'
 import { closeResultPanel } from './windows/result-panel'
 import { runFirstRunFlow } from './services/first-run'
 import { applyAppSecurity } from './services/security'
+import { registerTranscribeFileIPC } from './services/transcribe-file'
 import { getMemorySummary } from './services/memory'
 import { formatMemorySummary } from './services/memory-helpers'
+import { startAutoUpdater } from './services/updater'
+import { initLogger, log } from './services/logger'
 import { resolvePreloadPath, resolveRendererPath } from './utils/paths'
 import { runSelfCheck } from './utils/selfcheck'
 
@@ -94,6 +97,11 @@ if (!app.requestSingleInstanceLock()) {
       app.setAppUserModelId('com.screenshpeak.app')
     }
 
+    // Logger first — installs uncaughtException + unhandledRejection hooks
+    // that any later bootstrapping should benefit from.
+    initLogger()
+    log('info', `app starting — v${app.getVersion()} (packaged=${app.isPackaged})`)
+
     // Install global security protections BEFORE any BrowserWindow is created
     // so that the `web-contents-created` hook fires for every renderer.
     applyAppSecurity()
@@ -102,6 +110,7 @@ if (!app.requestSingleInstanceLock()) {
     registerAIIPC()
     registerVoiceIPC()
     registerCaptureIPC()
+    registerTranscribeFileIPC()
 
     // Allow other windows (e.g. the result panel's error CTAs) to open
     // the Settings window without each window-manager needing a direct
@@ -166,19 +175,35 @@ if (!app.requestSingleInstanceLock()) {
     })
 
     ipcMain.handle('app:check-for-updates', async () => {
-      // electron-updater is wired up properly in TASK-045 (Phase 5) once
-      // the GitHub Releases pipeline exists. In dev mode there's no
-      // installable update channel, so we return a stable "not available"
-      // shape the UI can render.
       if (!app.isPackaged) {
         return {
           status: 'unavailable' as const,
-          message: 'Update check is disabled in dev mode (no release channel yet).'
+          message: 'Update check is disabled in dev mode (no release channel).'
         }
       }
-      return {
-        status: 'unavailable' as const,
-        message: 'Update channel will be available once v1.0.0 ships from GitHub Releases.'
+      // Real check via electron-updater. Resolves to the structure the App
+      // tab UI expects. Errors during the check (offline, GitHub rate-limit,
+      // misconfigured release channel) all surface as `kind: 'error'`.
+      try {
+        const { autoUpdater } = await import('electron-updater')
+        const result = await autoUpdater.checkForUpdates()
+        if (!result || !result.updateInfo) {
+          return { status: 'up-to-date' as const, message: 'You are on the latest version.' }
+        }
+        const remoteVersion = result.updateInfo.version
+        if (remoteVersion === app.getVersion()) {
+          return { status: 'up-to-date' as const, message: 'You are on the latest version.' }
+        }
+        return {
+          status: 'available' as const,
+          version: remoteVersion,
+          message: 'Downloading in the background — you\'ll be prompted to install on quit.'
+        }
+      } catch (err) {
+        return {
+          status: 'error' as const,
+          message: (err as Error).message
+        }
       }
     })
 
@@ -210,6 +235,13 @@ if (!app.requestSingleInstanceLock()) {
       runFirstRunFlow()
     } catch (err) {
       console.warn('[index] first-run flow threw:', (err as Error).message)
+    }
+
+    // Auto-update — checks GitHub Releases 5 seconds after start. No-op in dev.
+    try {
+      startAutoUpdater()
+    } catch (err) {
+      console.warn('[index] startAutoUpdater threw:', (err as Error).message)
     }
 
     // TASK-043 verification helper: take 4 memory snapshots over the first
@@ -253,12 +285,21 @@ app.on('window-all-closed', () => {
   // Tray-only app — never quit when all windows close.
 })
 
-app.on('before-quit', () => {
+app.on('before-quit', async () => {
   stopVoiceHotkey()
   stopCaptureHotkey()
   audioService.destroy()
   destroyMicIndicator()
   closePicker()
   closeResultPanel()
+  // Close the live transcript panel if a meeting was in flight at app quit.
+  // We do a best-effort import here so the symbol is available without
+  // restructuring the main top-level imports.
+  try {
+    const { closeLiveTranscriptPanel } = await import('./windows/live-transcript-panel')
+    closeLiveTranscriptPanel()
+  } catch {
+    /* swallow — quit shouldn't fail on a cleanup helper */
+  }
   destroyTray()
 })

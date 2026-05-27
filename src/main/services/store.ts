@@ -25,6 +25,35 @@ export interface Config {
    *    longer recordings — no thumb fatigue)
    */
   voiceTriggerMode: 'hold' | 'toggle'
+  /**
+   * When true, voice transcription streams text into the active app
+   * (Windows Dictation style) as you speak instead of waiting for the
+   * hotkey release. Trade-off: per-chunk accuracy is slightly lower than
+   * a single batch pass on the full recording, and corrections are not
+   * applied retroactively (chunks are append-only). Off by default.
+   *
+   * Implementation: when true, the recorder window emits ~3 s audio chunks
+   * via MediaRecorder.start(timeslice), and the main-process stream-
+   * transcribe service spawns whisper-cli per chunk + pastes the result
+   * at the cursor. The release-of-hotkey batch transcription is SKIPPED
+   * in stream mode — text is already in the target app.
+   */
+  voiceStreamPaste: boolean
+
+  /**
+   * Hotkey that toggles a meeting recording on/off. Distinct from
+   * voiceHotkey because meetings use a press-to-toggle pattern (single
+   * tap to start, single tap to stop) — meetings run long and you don't
+   * want to hold the keys for 30 minutes. Mic + system audio are captured
+   * mixed together so all sides of a Zoom/Teams/Meet call get recorded.
+   */
+  meetingHotkey: string
+  /**
+   * True after the user has acknowledged the one-time consent banner
+   * informing them that recording other people's voice may require their
+   * permission depending on jurisdiction. Once true, never re-prompted.
+   */
+  meetingConsentAcknowledged: boolean
 
   launchOnStartup: boolean
   showTrayNotifications: boolean
@@ -49,6 +78,10 @@ const defaults: Config = {
   voiceLanguage: 'en',
   voiceMaxSeconds: 300,
   voiceTriggerMode: 'hold',
+  voiceStreamPaste: false,
+
+  meetingHotkey: 'Ctrl+Shift+M',
+  meetingConsentAcknowledged: false,
 
   launchOnStartup: true,
   showTrayNotifications: true,

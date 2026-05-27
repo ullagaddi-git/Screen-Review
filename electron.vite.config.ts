@@ -28,7 +28,8 @@ export default defineConfig({
           indicator: resolve(__dirname, 'src/main/indicator-preload.ts'),
           picker: resolve(__dirname, 'src/main/picker-preload.ts'),
           region: resolve(__dirname, 'src/main/region-preload.ts'),
-          result: resolve(__dirname, 'src/main/result-preload.ts')
+          result: resolve(__dirname, 'src/main/result-preload.ts'),
+          transcript: resolve(__dirname, 'src/main/transcript-preload.ts')
         }
       }
     }
@@ -43,7 +44,8 @@ export default defineConfig({
           'mic-indicator': resolve(__dirname, 'src/renderer/windows/result/mic-indicator.html'),
           'mode-picker': resolve(__dirname, 'src/renderer/windows/picker/mode-picker.html'),
           'region-overlay': resolve(__dirname, 'src/renderer/windows/picker/region-overlay.html'),
-          'result-panel': resolve(__dirname, 'src/renderer/windows/result/result-panel.html')
+          'result-panel': resolve(__dirname, 'src/renderer/windows/result/result-panel.html'),
+          'live-transcript': resolve(__dirname, 'src/renderer/windows/transcript/live-transcript.html')
         }
       }
     },

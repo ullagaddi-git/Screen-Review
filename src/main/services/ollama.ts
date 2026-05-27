@@ -148,6 +148,65 @@ class OllamaService {
     }
     return text
   }
+
+  /**
+   * Text-only generate — same /api/generate endpoint, no `images` field.
+   * Used by aiService.analyzeText for tasks like extracting action items
+   * from a meeting transcript. The user's configured `ollamaModel` is
+   * reused; vision models like llava:7b handle text-only prompts fine
+   * (just slower than a pure text model would be).
+   */
+  async generateText(opts: { prompt: string; model?: string }): Promise<string> {
+    const model = opts.model ?? getConfigValue('ollamaModel')
+    const body = {
+      model,
+      prompt: opts.prompt,
+      stream: false,
+      options: {
+        temperature: 0.2 // deterministic-ish — extracting facts, not creative writing
+      }
+    }
+
+    let res
+    try {
+      const client = this.getClient(ANALYZE_TIMEOUT_MS)
+      res = await client.post('/api/generate', body)
+    } catch (err) {
+      const e = err as { code?: string; message?: string }
+      if (e.code === 'ECONNABORTED' || e.code === 'ETIMEDOUT') {
+        throw new OllamaError(
+          `Ollama timed out after ${Math.round(ANALYZE_TIMEOUT_MS / 1000)}s`,
+          'timeout'
+        )
+      }
+      throw new OllamaError(
+        `Ollama unreachable: ${e.message ?? String(err)}`,
+        'unreachable'
+      )
+    }
+
+    if (res.status === 404) {
+      throw new OllamaError(
+        `Ollama model "${model}" is not installed. Run \`ollama pull ${model}\` to install it.`,
+        'model-missing'
+      )
+    }
+    if (res.status < 200 || res.status >= 300) {
+      throw new OllamaError(
+        `Ollama returned HTTP ${res.status}: ${JSON.stringify(res.data).slice(0, 200)}`,
+        'http-error'
+      )
+    }
+
+    const text = parseAnalyzeResponse(res.data)
+    if (!text) {
+      throw new OllamaError(
+        'Ollama returned an empty response.',
+        'invalid-response'
+      )
+    }
+    return text
+  }
 }
 
 export const ollamaService = OllamaService.getInstance()

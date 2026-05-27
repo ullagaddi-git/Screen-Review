@@ -28,7 +28,7 @@
 //      need it via `--enable-devtools`), but the log makes the unusual
 //      state visible.
 
-import { app, session } from 'electron'
+import { app, desktopCapturer, session } from 'electron'
 import type { BrowserWindow, Session, WebContents } from 'electron'
 import { isAllowedRendererUrl } from './security-helpers'
 
@@ -123,11 +123,45 @@ function permissionRequestHandler(
 }
 
 /**
+ * Allow the recorder window to request system audio loopback via
+ * `navigator.mediaDevices.getDisplayMedia()`. This is the modern path for
+ * capturing what's playing through the user's speakers (other meeting
+ * participants, YouTube, etc.).
+ *
+ * Without this handler, getDisplayMedia rejects with a permission error.
+ * Electron 33 requires us to intercept the request and explicitly return
+ * a source — we pick the first screen for the video track (which the
+ * renderer immediately discards) and ask for loopback audio.
+ */
+function installDisplayMediaHandler(s: Session): void {
+  s.setDisplayMediaRequestHandler((_request, callback) => {
+    desktopCapturer
+      .getSources({ types: ['screen'] })
+      .then((sources) => {
+        if (sources.length === 0) {
+          // No displays available — refuse the request.
+          callback({})
+          return
+        }
+        // Pass through the first screen for video (renderer drops it) and
+        // request audio loopback. Loopback = whatever the OS is playing.
+        callback({ video: sources[0], audio: 'loopback' })
+      })
+      .catch((err) => {
+        console.warn('[security] displayMedia handler error:', (err as Error).message)
+        callback({})
+      })
+  })
+}
+
+/**
  * Top-level installer. Call once from `app.whenReady()`, AFTER the
  * audio service has installed its own media-permission handler so we
  * don't clobber it.
  */
 export function applyAppSecurity(): void {
+  installDisplayMediaHandler(session.defaultSession)
+
   // Only install the HTTP-header CSP in production builds. In dev mode the
   // page is served from Vite (http://localhost:5173) and Vite injects HMR
   // client code, eval-based module updates, and dynamic imports that don't

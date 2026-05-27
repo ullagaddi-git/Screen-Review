@@ -1,0 +1,94 @@
+# Build and publish ScreenSpeak to GitHub Releases.
+#
+# Triggers:
+#   - Push to main → CI build only (no release). Catches build regressions.
+#   - Push of a `v*.*.*` tag → CI build → publish installer to GitHub Releases.
+#
+# To cut a release:
+#   1. Bump `version` in package.json on main.
+#   2. git tag v1.0.0 && git push origin v1.0.0
+#   3. This workflow builds the installer and uploads it to a draft GitHub
+#      Release named "v1.0.0". Edit the release notes (use docs/release-notes-v1.0.0.md
+#      as a starting point), then click "Publish".
+
+name: release
+
+on:
+  push:
+    branches: [main]
+    tags: ['v*.*.*']
+  workflow_dispatch: # let us run manually from the Actions tab
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+    permissions:
+      contents: write # required for electron-builder to create the GitHub Release
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      # Python 3.12 dropped distutils, which node-gyp needs. Pin to 3.11
+      # so any native modules that need rebuilding (uiohook-napi etc.)
+      # find the headers they expect. If/when node-gyp catches up we can
+      # remove this.
+      - name: Setup Python 3.11 for node-gyp
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: npm ci
+        env:
+          # Skip whisper download during npm install — we'll do it on a
+          # dedicated step so the log lines are easier to find.
+          SKIP_WHISPER_DOWNLOAD: '0'
+
+      # The whisper postinstall already ran via `npm ci`, but if it failed
+      # silently (e.g. transient GitHub rate limit on the download step)
+      # we'd build a broken installer. Run it again explicitly so any
+      # error fails the workflow instead of shipping silently.
+      - name: Verify whisper resources
+        run: |
+          npm run download:whisper
+          npm run download:whisper-bin
+        shell: bash
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Test
+        run: npm test
+
+      - name: Build (vite + electron-builder, publish to draft on tags)
+        run: |
+          if ($env:GITHUB_REF -like 'refs/tags/v*') {
+            Write-Host "Tag push — publishing draft release"
+            npx electron-vite build
+            npx electron-builder --win nsis -c.npmRebuild=false --publish always
+          } else {
+            Write-Host "Branch push — building installer without publishing"
+            npx electron-vite build
+            npx electron-builder --win nsis -c.npmRebuild=false --publish never
+          }
+        shell: pwsh
+        env:
+          # electron-builder reads GH_TOKEN to auth against the GitHub API
+          # for the publish step. The default GITHUB_TOKEN has the right
+          # scope for the same-repo release upload.
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Upload installer as workflow artifact (always)
+        uses: actions/upload-artifact@v4
+        with:
+          name: screenspeak-installer
+          path: dist/ScreenSpeak-*-Setup.exe
+          if-no-files-found: error
+          retention-days: 14

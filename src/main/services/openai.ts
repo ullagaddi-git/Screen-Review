@@ -137,6 +137,49 @@ class OpenAIService {
     }
     return text
   }
+
+  /**
+   * Text-only chat completion. Used for tasks like extracting action items
+   * from a meeting transcript, where there's no image involved. We use
+   * gpt-4o-mini by default because it's ~10× cheaper than gpt-4o and the
+   * task is straightforward text extraction.
+   */
+  async generateText(opts: { prompt: string; apiKey?: string; model?: string }): Promise<string> {
+    const apiKey = opts.apiKey ?? this.getStoredKey()
+    if (!apiKey) throw new OpenAIKeyMissingError()
+
+    // Action-item extraction is a fairly simple text task — gpt-4o-mini is
+    // both faster and ~10× cheaper than the vision model. Users can
+    // override via opts.model if they want to spend more for quality.
+    const model = opts.model ?? 'gpt-4o-mini'
+
+    let response
+    try {
+      const client = new OpenAI({
+        apiKey,
+        timeout: ANALYZE_TIMEOUT_MS,
+        maxRetries: 1
+      })
+      response = await client.chat.completions.create({
+        model,
+        messages: [{ role: 'user', content: opts.prompt }],
+        max_tokens: MAX_OUTPUT_TOKENS,
+        temperature: 0.2
+      })
+    } catch (err) {
+      const c = classifyOpenAIError(err)
+      throw new OpenAIError(c.message, c.kind)
+    }
+
+    const text = parseAnalyzeResponse(response)
+    if (!text) {
+      throw new OpenAIError(
+        'OpenAI returned an empty response.',
+        'unknown'
+      )
+    }
+    return text
+  }
 }
 
 export const openaiService = OpenAIService.getInstance()

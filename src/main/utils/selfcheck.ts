@@ -2,7 +2,15 @@ import { ipcMain } from 'electron'
 import { resolvePreloadPath, assertExists } from './paths'
 
 /** Preload scripts that must exist at runtime, keyed by short name. */
-const REQUIRED_PRELOADS = ['index', 'recorder', 'indicator', 'picker', 'region', 'result']
+const REQUIRED_PRELOADS = [
+  'index',
+  'recorder',
+  'indicator',
+  'picker',
+  'region',
+  'result',
+  'transcript'
+]
 
 export interface SelfCheckResult {
   ok: boolean

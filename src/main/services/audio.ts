@@ -1,6 +1,7 @@
 import { app, BrowserWindow, ipcMain, session } from 'electron'
 import { resolvePreloadPath, resolveRendererPath } from '../utils/paths'
 import { getConfigValue } from './store'
+import { streamTranscribeService } from './stream-transcribe'
 
 const isDev = !app.isPackaged
 const RECORDER_TIMEOUT_MS = 5000
@@ -33,9 +34,38 @@ class AudioService {
   private startInProgress: Promise<void> | null = null
   /** Timer that destroys the idle recorder window to reclaim memory. */
   private idleDestroyTimer: ReturnType<typeof setTimeout> | null = null
+  /**
+   * Snapshot of the session mode captured at startRecording. Drives:
+   *  - 'batch'  : current default — full WAV returned at stop, caller
+   *               transcribes via whisper + pastes via paste.ts.
+   *  - 'stream' : interim chunks streamed to stream-transcribe with
+   *               sink='paste', no final batch — text is already in
+   *               the target app.
+   *  - 'meeting': same chunk streaming but with sink='meeting' and the
+   *               recorder captures mic + system audio mixed. Caller
+   *               (meeting.ts) drains stream-transcribe at stop and
+   *               saves the transcript .txt.
+   */
+  private sessionMode: 'batch' | 'stream' | 'meeting' = 'batch'
 
   isRecording(): boolean {
     return this.recording
+  }
+
+  /**
+   * Was the currently-active (or most-recently-completed) recording
+   * captured in stream-or-meeting mode? Voice IPC checks this to decide
+   * whether to do a final batch paste at hotkey release — in those
+   * modes the text is already in the target app (stream) or
+   * accumulated for save (meeting), so the final paste is a no-op.
+   */
+  isStreamSession(): boolean {
+    return this.sessionMode !== 'batch'
+  }
+
+  /** True if the active session was a meeting (mic + system audio). */
+  isMeetingSession(): boolean {
+    return this.sessionMode === 'meeting'
   }
 
   /**
@@ -73,7 +103,14 @@ class AudioService {
     this.autoStopHandler = handler
   }
 
-  async startRecording(): Promise<void> {
+  async startRecording(options?: {
+    forceStream?: boolean
+    /**
+     * Force a meeting session — captures mic + system audio mixed and
+     * uses stream-transcribe with sink='meeting'. Implies forceStream.
+     */
+    forceMeeting?: boolean
+  }): Promise<void> {
     if (this.recording) return
     if (this.startInProgress) return this.startInProgress
 
@@ -95,7 +132,33 @@ class AudioService {
           Number.isFinite(configured) && configured > 0
             ? Math.min(configured, HARD_MAX_RECORDING_SECONDS)
             : DEFAULT_MAX_RECORDING_SECONDS
-        this.window?.webContents.send('recorder:start', maxSeconds)
+
+        // Capture session mode once at start. Changing the setting
+        // mid-session shouldn't reroute audio paths halfway through.
+        // forceMeeting > forceStream > config default. Meeting implies
+        // streaming (chunks).
+        if (options?.forceMeeting === true) {
+          this.sessionMode = 'meeting'
+        } else if (
+          options?.forceStream === true ||
+          !!getConfigValue('voiceStreamPaste')
+        ) {
+          this.sessionMode = 'stream'
+        } else {
+          this.sessionMode = 'batch'
+        }
+        if (this.sessionMode !== 'batch') {
+          streamTranscribeService.beginSession(
+            this.sessionMode === 'meeting' ? 'meeting' : 'paste'
+          )
+        }
+
+        this.window?.webContents.send(
+          'recorder:start',
+          maxSeconds,
+          this.sessionMode === 'stream' || this.sessionMode === 'meeting',
+          this.sessionMode === 'meeting'
+        )
       } finally {
         this.startInProgress = null
       }
@@ -219,12 +282,62 @@ class AudioService {
       for (const w of waiters) w()
     })
 
+    // Interim audio chunk during a stream-mode session — route directly
+    // to the stream-transcribe orchestrator. Never resolves a pending
+    // stop, never invokes the auto-stop handler.
+    ipcMain.on('recorder:audio-chunk', (_event, audio: ArrayBuffer | Uint8Array) => {
+      const buffer =
+        audio instanceof ArrayBuffer
+          ? Buffer.from(audio)
+          : Buffer.from(audio.buffer, audio.byteOffset, audio.byteLength)
+      streamTranscribeService.pushChunk(buffer)
+    })
+
     ipcMain.on('recorder:audio', (_event, audio: ArrayBuffer | Uint8Array) => {
       const buffer =
         audio instanceof ArrayBuffer
           ? Buffer.from(audio)
           : Buffer.from(audio.buffer, audio.byteOffset, audio.byteLength)
 
+      // Stream-or-meeting session: the "final" audio is just the residual
+      // tail. Push it as one more chunk, then resolve the stop promise
+      // with an empty buffer so voice.ts knows there's no batch
+      // transcription to do — the text is either already in the user's
+      // editor (stream) or being held by stream-transcribe pending a
+      // drain (meeting). The CALLER is responsible for invoking
+      // streamTranscribeService.endSession() and using the result —
+      // we don't do it here because in meeting mode the caller needs
+      // to await the drain and save the transcript.
+      if (this.sessionMode !== 'batch') {
+        if (buffer.length > 0) streamTranscribeService.pushChunk(buffer)
+
+        // Auto-end paste-sink sessions (existing dictation behavior) so
+        // we don't strand the queue with no one to drain it. Meeting
+        // sessions are explicitly drained by meeting.ts after stop.
+        if (this.sessionMode === 'stream') {
+          void streamTranscribeService.endSession()
+        }
+
+        if (this.pendingStop) {
+          const { resolve, timer } = this.pendingStop
+          clearTimeout(timer)
+          this.pendingStop = null
+          this.scheduleIdleDestroy()
+          // Return an empty buffer — voice.ts checks isStreamSession()
+          // and short-circuits the batch transcription.
+          resolve(Buffer.alloc(0))
+        } else if (this.recording) {
+          // Renderer auto-stopped (max-duration cap) — recovery: signal
+          // autoStopHandler with empty so it logs and broadcasts state
+          // cleanly. For meeting mode, meeting.ts has its own handler.
+          this.recording = false
+          this.scheduleIdleDestroy()
+          if (this.autoStopHandler) this.autoStopHandler(Buffer.alloc(0))
+        }
+        return
+      }
+
+      // Batch mode (existing behavior, unchanged).
       if (this.pendingStop) {
         const { resolve, timer } = this.pendingStop
         clearTimeout(timer)

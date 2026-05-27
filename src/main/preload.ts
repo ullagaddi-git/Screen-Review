@@ -68,6 +68,13 @@ const api = {
   voice: {
     requestStart: (): Promise<{ ok: boolean; error?: string }> =>
       ipcRenderer.invoke('voice:request-start'),
+    /**
+     * Force a stream-mode dictation session regardless of the global
+     * voiceStreamPaste setting. Used by the dedicated "Start live
+     * streaming" button in the Voice tab.
+     */
+    requestStartStream: (): Promise<{ ok: boolean; error?: string }> =>
+      ipcRenderer.invoke('voice:request-start-stream'),
     requestStop: (): Promise<{ ok: boolean }> => ipcRenderer.invoke('voice:request-stop'),
     reloadHotkey: (): Promise<{ ok: boolean; hotkey?: string }> =>
       ipcRenderer.invoke('voice:reload-hotkey'),
@@ -77,6 +84,56 @@ const api = {
       ipcRenderer.on('voice:state', listener)
       return () => ipcRenderer.removeListener('voice:state', listener)
     }
+  },
+  /**
+   * Upload-and-transcribe (TASK-060). Renderer decodes the user's
+   * uploaded audio/video into a 16 kHz mono WAV via Web Audio API,
+   * then sends the WAV here. Main runs whisper-cli + optionally the
+   * action-items LLM prompt.
+   */
+  transcribeFile: {
+    run: (payload: {
+      sourceFilename: string
+      durationSeconds: number
+      wav: ArrayBuffer
+    }): Promise<
+      | { ok: true; transcript: string; durationSeconds: number; sourceFilename: string }
+      | { ok: false; error: string }
+    > => ipcRenderer.invoke('transcribe-file:run', payload),
+    extractActions: (
+      transcript: string
+    ): Promise<{ ok: boolean; text?: string; error?: string; provider?: string }> =>
+      ipcRenderer.invoke('transcribe-file:extract-actions', transcript),
+    saveTranscript: (payload: {
+      sourceFilename: string
+      durationSeconds: number
+      transcript: string
+    }): Promise<{ ok: boolean; filePath?: string; error?: string }> =>
+      ipcRenderer.invoke('transcribe-file:save-transcript', payload),
+    saveActions: (payload: {
+      sourceFilename: string
+      actions: string
+    }): Promise<{ ok: boolean; filePath?: string; error?: string }> =>
+      ipcRenderer.invoke('transcribe-file:save-actions', payload),
+    openFolder: (): Promise<{ ok: boolean; folder?: string }> =>
+      ipcRenderer.invoke('transcribe-file:open-folder'),
+    showFile: (filePath: string): Promise<{ ok: boolean }> =>
+      ipcRenderer.invoke('transcribe-file:show-file', filePath)
+  },
+  meeting: {
+    /** Start or stop the meeting recording (single-tap toggle semantics). */
+    toggle: (): Promise<{ ok: boolean; state: 'idle' | 'recording' | 'saving' }> =>
+      ipcRenderer.invoke('meeting:toggle'),
+    /** Current meeting state + whether the consent banner has been acknowledged. */
+    getState: (): Promise<{
+      state: 'idle' | 'recording' | 'saving'
+      consentAcknowledged: boolean
+    }> => ipcRenderer.invoke('meeting:get-state'),
+    /** Persist the user's acknowledgement of the recording-consent banner. */
+    acknowledgeConsent: (): Promise<{ ok: boolean }> =>
+      ipcRenderer.invoke('meeting:acknowledge-consent'),
+    /** Open the meetings folder in Explorer. */
+    openFolder: (): Promise<{ ok: boolean }> => ipcRenderer.invoke('meeting:open-folder')
   },
   capture: {
     execute: (

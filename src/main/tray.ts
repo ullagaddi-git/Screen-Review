@@ -2,8 +2,15 @@ import { app, Menu, Tray, nativeImage } from 'electron'
 import { join } from 'node:path'
 import sharp from 'sharp'
 import { showResultPanel } from './windows/result-panel'
+import { meetingService } from './services/meeting'
 
 let tray: Tray | null = null
+/**
+ * Cached so refreshTrayMenu() can rebuild the menu with the same "open
+ * Settings" callback when the meeting state changes between renders.
+ */
+let onOpenSettingsCached: (() => void) | null = null
+let meetingUnsubscribe: (() => void) | null = null
 
 const APP_VERSION = '1.0.0'
 
@@ -31,15 +38,40 @@ function resolveIconPath(): string {
   return join(app.getAppPath(), 'resources', 'icons', 'tray-icon.png')
 }
 
-export function createTray(onOpenSettings: () => void): Tray {
-  if (tray) return tray
+/**
+ * Rebuilds + sets the tray context menu using the current meeting state
+ * so the "Start meeting recording" / "Stop meeting" label updates live.
+ * Called both at tray creation AND whenever meeting state changes.
+ */
+function refreshTrayMenu(): void {
+  if (!tray || !onOpenSettingsCached) return
 
-  const icon = nativeImage.createFromPath(resolveIconPath())
-  tray = new Tray(icon.isEmpty() ? nativeImage.createEmpty() : icon)
-  tray.setToolTip('ScreenSpeak')
+  const meetingState = meetingService.getState()
+  const meetingLabel =
+    meetingState === 'recording'
+      ? '■ Stop meeting recording'
+      : meetingState === 'saving'
+        ? 'Saving meeting…'
+        : '● Start meeting recording'
 
   const menuItems: Electron.MenuItemConstructorOptions[] = [
-    { label: 'Settings', click: onOpenSettings },
+    { label: 'Settings', click: onOpenSettingsCached },
+    { type: 'separator' },
+    {
+      label: meetingLabel,
+      enabled: meetingState !== 'saving',
+      click: async () => {
+        if (meetingState === 'recording') {
+          await meetingService.stop()
+        } else if (meetingState === 'idle') {
+          await meetingService.start()
+        }
+      }
+    },
+    {
+      label: 'Open meetings folder',
+      click: () => meetingService.openMeetingsFolder()
+    },
     { type: 'separator' },
     { label: `About ScreenSpeak v${APP_VERSION}`, enabled: false }
   ]
@@ -87,16 +119,49 @@ export function createTray(onOpenSettings: () => void): Tray {
   menuItems.push({ type: 'separator' }, { label: 'Quit', click: () => app.quit() })
 
   const menu = Menu.buildFromTemplate(menuItems)
-
   tray.setContextMenu(menu)
+}
+
+export function createTray(onOpenSettings: () => void): Tray {
+  if (tray) return tray
+
+  const icon = nativeImage.createFromPath(resolveIconPath())
+  tray = new Tray(icon.isEmpty() ? nativeImage.createEmpty() : icon)
+  tray.setToolTip('ScreenSpeak')
+  onOpenSettingsCached = onOpenSettings
+
+  // Build the menu once now and again whenever meeting state changes
+  // (so the label flips between "Start meeting recording" and "Stop
+  // meeting recording" + the tooltip can carry status info later).
+  refreshTrayMenu()
+  meetingUnsubscribe = meetingService.onStateChange((state) => {
+    refreshTrayMenu()
+    // Surface the current meeting state in the tray tooltip too — handy
+    // for users who hover the icon mid-meeting to confirm it's recording.
+    if (tray) {
+      tray.setToolTip(
+        state === 'recording'
+          ? 'ScreenSpeak — recording meeting'
+          : state === 'saving'
+            ? 'ScreenSpeak — saving meeting'
+            : 'ScreenSpeak'
+      )
+    }
+  })
+
   tray.on('click', onOpenSettings)
 
   return tray
 }
 
 export function destroyTray(): void {
+  if (meetingUnsubscribe) {
+    meetingUnsubscribe()
+    meetingUnsubscribe = null
+  }
   if (tray) {
     tray.destroy()
     tray = null
   }
+  onOpenSettingsCached = null
 }

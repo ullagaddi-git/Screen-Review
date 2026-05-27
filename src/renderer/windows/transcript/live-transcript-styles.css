@@ -1,0 +1,46 @@
+/* Fonts and design tokens come from ../../styles/globals.css. */
+
+html,
+body,
+#root {
+  margin: 0;
+  height: 100%;
+  background: transparent;
+  color: var(--color-text);
+  font-family: var(--font-body);
+  -webkit-font-smoothing: antialiased;
+  user-select: text;
+}
+
+body {
+  display: flex;
+  align-items: stretch;
+  justify-content: stretch;
+}
+
+/* The custom title bar at the top of the panel uses this region as a
+   drag handle so the user can move the borderless window. -webkit-app-region
+   is the Chromium extension Electron supports for borderless windows. */
+.drag-region {
+  -webkit-app-region: drag;
+}
+.no-drag {
+  -webkit-app-region: no-drag;
+}
+
+/* Smooth fade-in for newly arrived chunks so the list doesn't visually
+   jump when something appears. 200ms is enough to register without
+   feeling sluggish. */
+@keyframes chunk-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.chunk-fade-in {
+  animation: chunk-fade-in 200ms ease both;
+}

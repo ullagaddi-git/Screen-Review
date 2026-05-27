@@ -69,8 +69,23 @@ export function HotkeysTab(): JSX.Element {
         </header>
         <ul className="text-xs text-text-muted space-y-1.5 list-disc list-inside">
           <li>
-            Hotkeys are global — they fire even when other apps have focus. The capture
-            hotkey is "consumed" so apps like VS Code won't see it as Save As anymore.
+            Hotkeys are global — they fire even when other apps have focus.
+          </li>
+          <li>
+            <span className="text-text-primary font-medium">Capture hotkey</span> is{' '}
+            <em>consumed</em> by ScreenSpeak (uses Windows RegisterHotKey API), so
+            apps like VS Code won't see <span className="font-mono">Ctrl+Shift+S</span>{' '}
+            as "Save As" anymore.
+          </li>
+          <li>
+            <span className="text-text-primary font-medium">Voice hotkey</span> is{' '}
+            <em>observed but not consumed</em> (uses uiohook for hold-to-talk). If
+            you bind it to a letter key (e.g. <span className="font-mono">Ctrl+Shift+J</span>),
+            the focused app will <span className="text-warning">also</span> receive
+            those keystrokes while you hold them — and may react to them (e.g.
+            cursor moves, format changes). The default{' '}
+            <span className="font-mono">Ctrl+Shift+Space</span> avoids this because
+            Space + 2 modifiers is rarely bound by any app.
           </li>
           <li>
             If a combination won't register, it's likely already owned by Windows or

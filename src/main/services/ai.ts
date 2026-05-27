@@ -83,6 +83,170 @@ class AIService {
     }
   }
 
+  /**
+   * Text-only AI call. Routes through Ollama or OpenAI based on the same
+   * strategy logic as `analyze()`, but sends `prompt` only — no image.
+   * Used by TASK-060 (upload recording → extract action items) and any
+   * future feature that needs to summarize / extract from text.
+   *
+   * Returns the same AIAnalyzeResult shape so callers can reuse the same
+   * error-handling pattern as image analysis.
+   */
+  async analyzeText(prompt: string): Promise<AIAnalyzeResult> {
+    if (!prompt || !prompt.trim()) {
+      return {
+        ok: false,
+        provider: 'router',
+        errorKind: 'router-error',
+        message: 'analyzeText: empty prompt'
+      }
+    }
+
+    const aiMode = getConfigValue('aiMode')
+    const hasOpenAIKey = !!openaiService.getStoredKey()
+    const strategy = pickStrategy({ aiMode, hasOpenAIKey })
+
+    if (strategy === 'ollama') {
+      const running = await ollamaService.isRunning()
+      if (!running) {
+        return {
+          ok: false,
+          provider: 'ollama',
+          errorKind: 'ollama-unavailable',
+          message: 'Local AI is not running. Install Ollama (free) to enable.',
+          setupHint: 'https://ollama.com'
+        }
+      }
+      try {
+        const text = await ollamaService.generateText({ prompt })
+        return { ok: true, text, provider: 'ollama' }
+      } catch (err) {
+        return this.mapOllamaError(err)
+      }
+    }
+
+    if (strategy === 'openai') {
+      try {
+        const text = await openaiService.generateText({ prompt })
+        return { ok: true, text, provider: 'openai' }
+      } catch (err) {
+        return this.mapOpenAIError(err)
+      }
+    }
+
+    return {
+      ok: false,
+      provider: 'router',
+      errorKind: 'router-error',
+      message: `Unknown AI strategy: ${strategy as string}`
+    }
+  }
+
+  /** Shared Ollama error → AIAnalyzeResult mapper (used by both analyze and analyzeText). */
+  private mapOllamaError(err: unknown): AIAnalyzeResult {
+    if (err instanceof OllamaError) {
+      const map: Record<OllamaError['kind'], AIAnalyzeResult & { ok: false }> = {
+        unreachable: {
+          ok: false,
+          provider: 'ollama',
+          errorKind: 'ollama-unavailable',
+          message: err.message,
+          setupHint: 'https://ollama.com'
+        },
+        'model-missing': {
+          ok: false,
+          provider: 'ollama',
+          errorKind: 'ollama-model-missing',
+          message: err.message
+        },
+        timeout: {
+          ok: false,
+          provider: 'ollama',
+          errorKind: 'ollama-timeout',
+          message: err.message
+        },
+        'http-error': {
+          ok: false,
+          provider: 'ollama',
+          errorKind: 'ollama-error',
+          message: err.message
+        },
+        'invalid-response': {
+          ok: false,
+          provider: 'ollama',
+          errorKind: 'ollama-error',
+          message: err.message
+        }
+      }
+      return map[err.kind]
+    }
+    return {
+      ok: false,
+      provider: 'ollama',
+      errorKind: 'ollama-error',
+      message: (err as Error).message
+    }
+  }
+
+  /** Shared OpenAI error → AIAnalyzeResult mapper. */
+  private mapOpenAIError(err: unknown): AIAnalyzeResult {
+    if (err instanceof OpenAIKeyMissingError) {
+      return {
+        ok: false,
+        provider: 'openai',
+        errorKind: 'openai-key-missing',
+        message: err.message
+      }
+    }
+    if (err instanceof OpenAIError) {
+      const map: Record<OpenAIError['kind'], AIAnalyzeResult & { ok: false }> = {
+        auth: {
+          ok: false,
+          provider: 'openai',
+          errorKind: 'openai-auth',
+          message: 'OpenAI key is invalid. Check it in Settings → AI.'
+        },
+        'rate-limit': {
+          ok: false,
+          provider: 'openai',
+          errorKind: 'openai-rate-limit',
+          message: 'OpenAI rate limit hit. Wait a moment and try again.'
+        },
+        quota: {
+          ok: false,
+          provider: 'openai',
+          errorKind: 'openai-quota',
+          message: 'OpenAI quota exceeded. Check your billing at platform.openai.com.'
+        },
+        timeout: {
+          ok: false,
+          provider: 'openai',
+          errorKind: 'openai-timeout',
+          message: 'OpenAI request timed out. Try again or switch to Local AI.'
+        },
+        network: {
+          ok: false,
+          provider: 'openai',
+          errorKind: 'openai-network',
+          message: 'Could not reach api.openai.com. Check your network.'
+        },
+        unknown: {
+          ok: false,
+          provider: 'openai',
+          errorKind: 'openai-error',
+          message: err.message
+        }
+      }
+      return map[err.kind]
+    }
+    return {
+      ok: false,
+      provider: 'openai',
+      errorKind: 'openai-error',
+      message: (err as Error).message
+    }
+  }
+
   private async runOllama(opts: AIAnalyzeOptions): Promise<AIAnalyzeResult> {
     const running = await ollamaService.isRunning()
     if (!running) {
