@@ -13,14 +13,14 @@ About 5 minutes to install and try.
 ## Download
 
 - **Installer:** [link to Drive / Dropbox / GitHub Release]
-- **File:** `ScreenSpeak-1.0.0-Setup.exe`
+- **File:** `ScreenSpeak-1.0.0-beta.1-Setup.exe`
 - **Size:** 242 MB
-- **SHA-256:** `ac990e4bb26a695bdaecc08e8668a35a780c2a2935838ffab0d790bc0c425a02`
+- **SHA-256:** `ffd25f066bd7ed20c62b266d6cf036d2abf4564b1dc0901288cfabd267d13d91`
 
 To verify the download integrity (optional but recommended):
 
 ```powershell
-Get-FileHash .\ScreenSpeak-1.0.0-Setup.exe -Algorithm SHA256
+Get-FileHash .\ScreenSpeak-1.0.0-beta.1-Setup.exe -Algorithm SHA256
 ```
 
 It should match the SHA-256 above.
@@ -29,7 +29,7 @@ It should match the SHA-256 above.
 
 ## Installing (3 clicks, but read step 2)
 
-1. Run `ScreenSpeak-1.0.0-Setup.exe`.
+1. Run `ScreenSpeak-1.0.0-beta.1-Setup.exe`.
 2. ⚠️ **Windows will warn "Windows protected your PC"** — this is because
    the installer isn't yet code-signed (signing certs cost ~$200–400/year
    and I haven't bought one yet). Click **More info** → **Run anyway**.
